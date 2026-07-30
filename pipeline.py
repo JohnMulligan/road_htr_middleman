@@ -29,10 +29,15 @@ def get_incomplete_assignments():
 		results=incomplete_assignments_page['results']
 		assignments+=results
 		print(f"found {len(assignments)} assignments")
+		break
 	
-	incomplete_assignments=[a for a in assignments if a['status']['name']=='assigned' and a['id'] not in bad_assignments]
+	incomplete_assignments=[a for a in assignments if
+# 		a['status']['name']=='assigned' and
+		a['id'] not in bad_assignments
+	]
 	
 	print(f"counted {len(incomplete_assignments)}")
+	
 	return incomplete_assignments
 
 
@@ -58,14 +63,17 @@ def process_ia(ia):
 	assignment_id=ia['id']
 	print('image id',image_id,'assignment id',assignment_id)
 	ia_image_annotations=basic_requests(f'{base_url}annotations/?image={image_id}')
+	print("annotations",ia_image_annotations)
 	ia_image_trapp_data=basic_requests(f'{base_url}image/{image_id}/')
+	print("imagedata",ia_image_trapp_data)
 	if ia_image_trapp_data:
-		ia_image_trapp_data=ia_image_trapp_data.json
+		ia_image_trapp_data=ia_image_trapp_data.json()
 	image_base_uri=re.search('(.*?)(/full/.*)',ia_image_trapp_data['thumbnail_url']).group(1)
 	if ia_image_annotations:
-		ia_image_annotations=ia_image_annotations.json
+		ia_image_annotations=ia_image_annotations.json()
 	
 	for annotation in ia_image_annotations:
+		print("annotation",annotation)
 		annotation_iiif_image_uri=make_annotation_iiif_image_uri(annotation,image_base_uri)
 		infer_headers={
 			"Content-Type": "application/json"
@@ -101,6 +109,8 @@ def process_ia(ia):
 		"content_type":10,
 		"object_id":image_id
 	}
+	
+	exit()
 	
 	assignment_patch_url=f'{base_url}assignments/{assignment_id}/'
 	r=requests.patch(assignment_patch_url,data=json.dumps(assignment_patch_payload),headers=headers)
