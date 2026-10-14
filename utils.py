@@ -1,5 +1,6 @@
 import base64
 import logging
+import re
 import time
 
 import requests
@@ -138,10 +139,16 @@ def crop_box(annotation, width=None, height=None):
     return x0, y0, x1 - x0, y1 - y0
 
 
-def iiif_region_url(image_uri, box, size='max'):
-    base = image_uri.rstrip('/')
-    if base.endswith('/info.json'):
-        base = base[:-len('/info.json')]
+def image_service_url(image):
+    thumbnail = image.get('thumbnail_url') or ''
+    match = re.match(r'(.+/files/images/[^/]+?)/full/', thumbnail)
+    if not match:
+        raise ValueError(f'image {image.get("id")}: no IIIF image service in thumbnail_url {thumbnail!r}')
+    return match.group(1)
+
+
+def iiif_region_url(service_url, box, size='max'):
+    base = service_url.rstrip('/')
     x, y, w, h = box
     return f'{base}/{x},{y},{w},{h}/{size}/0/default.jpg'
 

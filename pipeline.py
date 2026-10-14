@@ -12,7 +12,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 
 import localsettings as settings
-from utils import ApiNotReady, Reader, Trapp, TrappError, crop_box, fetch, iiif_region_url
+from utils import ApiNotReady, Reader, Trapp, TrappError, crop_box, fetch, iiif_region_url, image_service_url
 
 log = logging.getLogger('middleman')
 
@@ -45,9 +45,7 @@ def process(trapp, reader, assignment, dry_run=False):
     if assignment['status']['name'] == 'assigned' and not dry_run:
         trapp.set_status(assignment_id, 'in_progress')
     image = trapp.image(image_id)
-    image_uri = image.get('iiif_image_id')
-    if not image_uri:
-        raise ValueError(f'image {image_id} has no IIIF image URI')
+    image_uri = image_service_url(image)
     annotations = sorted(trapp.annotations(image_id) or [], key=lambda a: (a.get('page_order') is None, a.get('page_order') or 0, a['id']))
     todo = [a for a in annotations if OVERWRITE or not existing_text(a)]
     log.info('assignment %s: %d lines, %d to read', assignment_id, len(annotations), len(todo))
